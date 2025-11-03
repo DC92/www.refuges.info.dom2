@@ -15,7 +15,6 @@ class listener implements EventSubscriberInterface
 		global $request;
 
 		$this->server = $request->get_super_global(\phpbb\request\request_interface::SERVER);
-		$this->cookies = $request->get_super_global(\phpbb\request\request_interface::COOKIE);
 	}
 
 	static public function getSubscribedEvents () {
@@ -87,6 +86,15 @@ class listener implements EventSubscriberInterface
 		// Pour le bandeau
 		$vue->java_lib_foot [] = $config_wri['sous_dossier_installation'].'vues/_bandeau.js?'
 			.filemtime($config_wri['chemin_vues'].'_bandeau.js');
+
+		// DOM pas moyen de factoriser ça dans une fonction commune. Il faudrait refondre les données vues communes
+		$vue->bandeau_info=wiki_page_brut('bandeau');
+		$vue->bandeau_info->cookie=$_COOKIE['bandeau_info'] ?? '';
+		$vue->bandeau_info->new_cookie_expire=
+			gmdate('r', time() + 24 * 3600 * (
+				$infos_identification->user_id > 1 ? 31 : 7 // Nombre de jours masqués
+			));
+
 		$vue->zones_pour_bandeau=remplissage_zones_bandeau(); // Menu des zones couvertes
 		$vue->types_point_affichables=types_point_affichables(); // Menu des types de points
 		if (est_moderateur()) {
@@ -110,19 +118,8 @@ class listener implements EventSubscriberInterface
 			header('Location: https://'.$this->server['HTTP_HOST'].$this->server['REQUEST_URI'], true, 301);
 	}
 
-	// Modification du style à la volée
 	public function user_setup ($event) {
-		global $db;
-
-		if (isset ($this->cookies['style'])) {
-			$sql = 'SELECT style_id FROM '.STYLES_TABLE.' WHERE style_path = \''.$this->cookies['style'].'\'';
-			$result = $db->sql_query ($sql);
-			$row = $db->sql_fetchrow ($result);
-			$db->sql_freeresult($result);
-
-			if ($row)
-				$event['style_id'] = $row['style_id'];
-		}
+		/* Reserved */
 	}
 
 	// Pour cocher par défaut l'option "m'avertir si une réponse" dans le cas d'un nouveau sujet ou d'une réponse
