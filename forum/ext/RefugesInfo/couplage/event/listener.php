@@ -54,13 +54,16 @@ class listener implements EventSubscriberInterface
 
 		// Pour avoir accés aux variables globales $_SERVER, ... dans config.php
 		$request->enable_super_globals();
+
 		// Pour exporter $config_wri & importer $pdo à l'intérieur d'une fonction
 		global $config_wri, $pdo;
 		require_once (__DIR__.'/../../../../../includes/config.php');
 		// Connexion / infos bandeaux
 		require_once ('identification.php');
-		require_once ('bandeau_dynamique.php');
 		require_once ('gestion_erreur.php');
+		//require_once ('wiki.php');
+
+		//require_once ($config_wri['chemin_controlleurs'].'bandeau.php');
 
 		/* Includes language files of this extension */
 		$ns = explode ('\\', __NAMESPACE__);
@@ -71,10 +74,10 @@ class listener implements EventSubscriberInterface
 			$user->session_kill();
 			header('Location: https://'.$this->server['HTTP_HOST'].$request->variable('redirect', '/'));
 		}
-
 		$template->assign_vars([
 			'BODY_CLASS' => $user->style['style_path'],
 			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
+			'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
 			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
 		]);
 
@@ -84,9 +87,10 @@ class listener implements EventSubscriberInterface
 		$vue->java_lib_foot = [];
 
 		// Pour le bandeau
-		$vue->java_lib_foot [] = $config_wri['sous_dossier_installation'].'vues/_bandeau.js?'
-			.filemtime($config_wri['chemin_vues'].'_bandeau.js');
+		$vue->java_lib_foot [] = $config_wri['sous_dossier_installation'].'vues/bandeau.js?'
+			.filemtime($config_wri['chemin_vues'].'bandeau.js');
 
+/*
 		// DOM pas moyen de factoriser ça dans une fonction commune. Il faudrait refondre les données vues communes
 		$vue->bandeau_info=wiki_page_brut('bandeau');
 		$vue->bandeau_info->cookie=$_COOKIE['bandeau_info'] ?? '';
@@ -101,10 +105,11 @@ class listener implements EventSubscriberInterface
 			$vue->demande_correction=info_demande_correction ();
 			$vue->email_en_erreur=info_email_bounce ();
 		}
+*/
 
 		// Récupère le contenu des fichiers pour les affecter à des variables du template PhpBB
 		ob_start();
-		include(fichier_vue('_bandeau.html'));
+		include(fichier_vue('bandeau.html'));
 		$template->assign_var('BANDEAU', ob_get_clean());
 
 		ob_start();
