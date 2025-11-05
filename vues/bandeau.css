@@ -317,21 +317,3 @@
     display: none;
   }
 }
-
-/*==================================================================*/
-/* Bas de page                                                      */
-/*==================================================================*/
-.basdepage {
-  clear: both;
-  padding-top: 15px;
-  text-align: center;
-  font-family: Times New Roman;
-  font-size: 16px;
-}
-
-.basdepage img,
-form {
-  /* tout le bazar de pub de bas de page, en ligne! */
-  display: inline;
-  vertical-align: middle;
-}
