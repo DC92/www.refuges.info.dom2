@@ -256,14 +256,4 @@ $config_wri['debug']=false; // cette option contrôle des sorties avec plus d'in
 // il est volontairement placé "presque" à la fin pour que les variables ci-avant puissent par exemple être remplacées si on souhaite un autre comportement
 require_once($config_wri['racine_projet']."config_privee.php");
 
-// Repli si config_privee.php ne contient pas les données du serveur, on va les chercher dans /forum/config.php
-if (file_exists ($config_wri['racine_projet']."/forum/config.php") &&
-	(!isset ($config_wri['serveur_pgsql']) || !$config_wri['serveur_pgsql'] || $config_wri['serveur_pgsql']=="???")) {
-  require($config_wri['racine_projet']."/forum/config.php");
-  $config_wri['serveur_pgsql']=$dbhost;
-  $config_wri['utilisateur_pgsql']=$dbuser;
-  $config_wri['mot_de_passe_pgsql']=$dbpasswd;
-  $config_wri['base_pgsql']=$dbname;
-}
-
 /*** N'ajoutez rien *** après ce require_once("config_privee.php"); sauf si vous savez pourquoi, car ajouter après empêche de "surdéfinir" certaines variables du fichier privé à chaque instance ci avant mettez par contre tout ce que vous voulez avant le require_once("config_privee.php"); ***/

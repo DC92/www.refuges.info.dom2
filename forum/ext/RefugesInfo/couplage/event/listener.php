@@ -9,12 +9,10 @@ namespace RefugesInfo\couplage\event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class listener implements EventSubscriberInterface
 {
-	protected $server;
-
 	public function __construct() {
 		global $request;
 
-		$this->server = $request->get_super_global(\phpbb\request\request_interface::SERVER);
+		$request->enable_super_globals();
 	}
 
 	static public function getSubscribedEvents () {
@@ -22,8 +20,6 @@ class listener implements EventSubscriberInterface
 			'core.viewtopic_assign_template_vars_before' => 'assign_template_vars_before',
 			'core.posting_modify_template_vars' => 'assign_template_vars_before',
 			'core.page_footer' => 'page_footer', // includes/functions.php 4308
-			'core.login_box_before' => 'login_box_before',
-			'core.user_setup' => 'user_setup',
 			'core.user_add_modify_data' => 'user_add_modify_data',
 			'core.user_add_modify_notifications_data' => 'user_add_modify_notifications_data',
 		];
@@ -52,9 +48,6 @@ class listener implements EventSubscriberInterface
 		// dans des variables des templates de PhpBB V3.2
 		global $request, $user, $language, $template, $point; // Contexte phpbb
 
-		// Pour avoir accés aux variables globales $_SERVER, ... dans config.php
-		$request->enable_super_globals();
-
 		// Pour exporter $config_wri & importer $pdo à l'intérieur d'une fonction
 		global $config_wri, $pdo;
 		require_once (__DIR__.'/../../../../../includes/config.php');
@@ -65,19 +58,14 @@ class listener implements EventSubscriberInterface
 
 		//require_once ($config_wri['chemin_controlleurs'].'bandeau.php');
 
-		/* Includes language files of this extension */
-		$ns = explode ('\\', __NAMESPACE__);
-		$language->add_lang('common', $ns[0].'/'.$ns[1]);
-
 		// On traite le logout ici car la fonction de base demande un sid (on se demande pourquoi ?)
 		if ($request->variable('mode', '') == 'logout') {
 			$user->session_kill();
-			header('Location: https://'.$this->server['HTTP_HOST'].$request->variable('redirect', '/'));
+			header('Location: https://'.$_SERVER['HTTP_HOST'].$request->variable('redirect', '/'));
 		}
 		$template->assign_vars([
-			'BODY_CLASS' => $user->style['style_path'],
 			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
-			'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
+			//'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
 			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
 		]);
 
@@ -115,16 +103,6 @@ class listener implements EventSubscriberInterface
 		ob_start();
 		include(fichier_vue('_pied.html'));
 		$template->assign_var('PIED', ob_get_clean());
-	}
-
-	// Forçage https du login
-	public function login_box_before () {
-		if (!isset($this->server['HTTPS']))
-			header('Location: https://'.$this->server['HTTP_HOST'].$this->server['REQUEST_URI'], true, 301);
-	}
-
-	public function user_setup ($event) {
-		/* Reserved */
 	}
 
 	// Pour cocher par défaut l'option "m'avertir si une réponse" dans le cas d'un nouveau sujet ou d'une réponse
