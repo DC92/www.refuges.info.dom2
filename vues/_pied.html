@@ -25,8 +25,9 @@ if (isset ($vue->java_lib_foot))
 		include(fichier_vue('bandeau.js'));
 
 		// Pour les pages du site
-		if ($vue->type)
-			include(fichier_vue($vue->type.'.js'));
+		$nom_js_inclus = fichier_vue($vue->type.'.js');
+		if ($nom_js_inclus)
+			include($nom_js_inclus);
 	?>
 //]]>
 </script>
