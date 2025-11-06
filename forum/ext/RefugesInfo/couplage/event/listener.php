@@ -10,9 +10,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class listener implements EventSubscriberInterface
 {
 	public function __construct() {
-		global $request;
+		global $request, $__time_start;
 
 		$request->enable_super_globals();
+		$__time_start = microtime(true); // Stats du forum
 	}
 
 	static public function getSubscribedEvents () {
@@ -42,66 +43,36 @@ class listener implements EventSubscriberInterface
 		}
 	}
 
+	// Interface avec le site
 	public function page_footer () {
-		// Les fichiers template du bandeau et du pied de page étant au format "MVC+template type refuges.info",
-		// on les évalue dans leur contexte PHP et on introduit le code HTML résultant
-		// dans des variables des templates de PhpBB V3.2
-		global $request, $user, $language, $template, $point; // Contexte phpbb
-
-		// Pour exporter $config_wri & importer $pdo à l'intérieur d'une fonction
-		global $config_wri, $pdo;
-		require_once (__DIR__.'/../../../../../includes/config.php');
-		// Connexion / infos bandeaux
-		require_once ('identification.php');
-		require_once ('gestion_erreur.php');
-		//require_once ('wiki.php');
-
-		//require_once ($config_wri['chemin_controlleurs'].'bandeau.php');
-
-		// On traite le logout ici car la fonction de base demande un sid (on se demande pourquoi ?)
-		if ($request->variable('mode', '') == 'logout') {
-			$user->session_kill();
-			header('Location: https://'.$_SERVER['HTTP_HOST'].$request->variable('redirect', '/'));
-		}
-		$template->assign_vars([
-			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
-			//'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
-			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
-		]);
+		global $config_wri, $pdo, $template, $user, $__time_start;
 
 		// On recrée le contexte car on n'est pas dans le MVC de WRI
+		require_once (__DIR__.'/../../../../../includes/config.php');
+		require_once ('bdd.php');
+		require_once ('gestion_erreur.php');
+
 		$vue = new \stdClass;
 		$vue->type = '';
 		$vue->java_lib_foot = [];
 
-		// Pour le bandeau
-		$vue->java_lib_foot [] = $config_wri['sous_dossier_installation'].'vues/bandeau.js?'
-			.filemtime($config_wri['chemin_vues'].'bandeau.js');
+		$template->assign_vars([
+			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
+			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
+			'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
+		]);
 
-/*
-		// DOM pas moyen de factoriser ça dans une fonction commune. Il faudrait refondre les données vues communes
-		$vue->bandeau_info=wiki_page_brut('bandeau');
-		$vue->bandeau_info->cookie=$_COOKIE['bandeau_info'] ?? '';
-		$vue->bandeau_info->new_cookie_expire=
-			gmdate('r', time() + 24 * 3600 * (
-				$infos_identification->user_id > 1 ? 31 : 7 // Nombre de jours masqués
-			));
-
-		$vue->zones_pour_bandeau=remplissage_zones_bandeau(); // Menu des zones couvertes
-		$vue->types_point_affichables=types_point_affichables(); // Menu des types de points
-		if (est_moderateur()) {
-			$vue->demande_correction=info_demande_correction ();
-			$vue->email_en_erreur=info_email_bounce ();
-		}
-*/
+		// On appelle le controleur du bandeau pour afficher le bloc
+		include ($config_wri['chemin_controlleurs']."bandeau.php");
 
 		// Récupère le contenu des fichiers pour les affecter à des variables du template PhpBB
+		// pour qu'ils soient insérés aux bons endroits
 		ob_start();
-		include(fichier_vue('bandeau.html'));
+			include(fichier_vue('bandeau.html'));
 		$template->assign_var('BANDEAU', ob_get_clean());
 
 		ob_start();
-		include(fichier_vue('_pied.html'));
+			include(fichier_vue('_pied.html'));
 		$template->assign_var('PIED', ob_get_clean());
 	}
 
