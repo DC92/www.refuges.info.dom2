@@ -79,8 +79,8 @@ if (!isset($vue->type))
 // On appelle le controlleur du bandeau, nécéssaire pour toutes les pages
 include ($config_wri['chemin_controlleurs']."bandeau.php");
 
-// On appel le controlleur qui pourra, s'il le souhaite, changer le type de vue ($type->vue)
+// On appelle le controlleur qui pourra, s'il le souhaite, changer le type de vue ($type->vue)
 include ($config_wri['chemin_controlleurs'].$controlleur->type.".php");
 
-// On affiche la vue
+// On affiche la page (bandeau + vue)
 include(fichier_vue($vue->template));
