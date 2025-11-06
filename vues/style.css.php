@@ -115,3 +115,19 @@ body {
   background-color: var(--couleur_fond);
   color: var(--couleur_texte);
 }
+
+/*==================================================================*/
+/* Bas de page                                                      */
+/*==================================================================*/
+.basdepage {
+  clear: both;
+  padding-top: 15px;
+  text-align: center;
+  font-family: Times New Roman;
+  font-size: 16px;
+}
+
+.basdepage img {
+  display: inline;
+  vertical-align: middle;
+}

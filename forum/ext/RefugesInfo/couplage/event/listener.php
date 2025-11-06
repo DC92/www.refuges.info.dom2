@@ -9,10 +9,12 @@ namespace RefugesInfo\couplage\event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class listener implements EventSubscriberInterface
 {
-	static public function getSubscribedEvents () {
+	public function __construct() {
 		global $__time_start;
 		$__time_start = microtime(true); // Stats du forum
+	}
 
+	static public function getSubscribedEvents () {
 		return [
 			'core.viewtopic_assign_template_vars_before' => 'assign_template_vars_before',
 			'core.posting_modify_template_vars' => 'assign_template_vars_before',
@@ -39,10 +41,19 @@ class listener implements EventSubscriberInterface
 		}
 	}
 
-	// Interface avec le site
 	public function page_footer () {
+		// Les fichiers template du bandeau et du pied de page étant au format "MVC+template type refuges.info",
+		// on les évalue dans leur contexte PHP et on introduit le code HTML résultant
+		// dans des variables des templates de PhpBB V3.2
 		global $config_wri, $pdo, $__time_start, $request, $template, $user;
+
+		// Pour avoir accés aux variables globales $_SERVER, ... dans config.php
 		$request->enable_super_globals();
+
+		// Pour exporter $config_wri & importer $pdo à l'intérieur d'une fonction
+		require_once (__DIR__.'/../../../../../includes/config.php');
+		require_once ('bdd.php');
+		require_once ('gestion_erreur.php');
 
 		// On traite le logout ici car la fonction de base demande un sid (on se demande pourquoi ?)
 		if ($request->variable('mode', '') == 'logout') {
@@ -50,20 +61,18 @@ class listener implements EventSubscriberInterface
 			header('Location: https://'.$_SERVER['HTTP_HOST'].$request->variable('redirect', '/'));
 		}
 
+		// Les liens complets avec le jack de rechargement
+		// pour qu'ils soient insérés aux bons endroits
+		$template->assign_vars([
+			'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
+			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
+			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
+		]);
+
 		// On recrée le contexte car on n'est pas dans le MVC de WRI
 		$vue = new \stdClass;
 		$vue->type = '';
 		$vue->java_lib_foot = [];
-
-		require_once (__DIR__.'/../../../../../includes/config.php');
-		require_once ('bdd.php');
-		require_once ('gestion_erreur.php');
-
-		$template->assign_vars([
-			'STYLE_CSS' => fichier_vue('style.css.php', 'chemin_vues', true),
-			'STYLE_FORUM_CSS' => fichier_vue('style_forum.css', 'chemin_vues', true),
-			'BANDEAU_CSS' => fichier_vue('bandeau.css', 'chemin_vues', true),
-		]);
 
 		// On appelle le controleur du bandeau pour afficher le bloc
 		include ($config_wri['chemin_controlleurs']."bandeau.php");
@@ -71,11 +80,11 @@ class listener implements EventSubscriberInterface
 		// Récupère le contenu des fichiers pour les affecter à des variables du template PhpBB
 		// pour qu'ils soient insérés aux bons endroits
 		ob_start();
-			include(fichier_vue('bandeau.html'));
+		include(fichier_vue('bandeau.html'));
 		$template->assign_var('BANDEAU', ob_get_clean());
 
 		ob_start();
-			include(fichier_vue('_pied.html'));
+		include(fichier_vue('_pied.html'));
 		$template->assign_var('PIED', ob_get_clean());
 	}
 
