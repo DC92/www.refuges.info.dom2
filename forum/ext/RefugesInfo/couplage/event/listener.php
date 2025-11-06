@@ -45,7 +45,7 @@ class listener implements EventSubscriberInterface
 
 	// Interface avec le site
 	public function page_footer () {
-		global $config_wri, $pdo, $template, $user, $__time_start;
+		global $config_wri, $pdo, $__time_start, $request, $template, $user;
 
 		// On recrée le contexte car on n'est pas dans le MVC de WRI
 		require_once (__DIR__.'/../../../../../includes/config.php');
@@ -74,6 +74,12 @@ class listener implements EventSubscriberInterface
 		ob_start();
 			include(fichier_vue('_pied.html'));
 		$template->assign_var('PIED', ob_get_clean());
+
+		// On traite le logout ici car la fonction de base demande un sid (on se demande pourquoi ?)
+		if ($request->variable('mode', '') == 'logout') {
+			$user->session_kill();
+			header('Location: https://'.$_SERVER['HTTP_HOST'].$request->variable('redirect', '/'));
+		}
 	}
 
 	// Pour cocher par défaut l'option "m'avertir si une réponse" dans le cas d'un nouveau sujet ou d'une réponse
